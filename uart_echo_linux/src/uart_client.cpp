@@ -1,7 +1,11 @@
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
 #include <string>
+#include <thread>
+
 #include <termios.h>
 #include <unistd.h>
 
@@ -74,19 +78,25 @@ int main() {
      *  receive here based on that expectation.
      */
 
-    for (const char ch : msg) {
-        // Send one char.
-        write(fd, (void *)&ch, 1);
-        std::cout << "Sent: " << ch << std::endl;
+    static constexpr uint32_t NUM_TRANS = 100;
 
-        // Try to receive one char.
-        memset(rxBuf, 0, sizeof(rxBuf));
-        int n = read(fd, rxBuf, 1);
-        if (n > 0) {
-            std::cout << "Received: " << rxBuf[0] << std::endl;
-        } else {
-            std::cout << "No data received." << std::endl;
+    for (uint32_t trans = 0; trans < NUM_TRANS; ++trans) {
+        for (const char ch : msg) {
+            // Send one char.
+            write(fd, (void *)&ch, 1);
+            std::cout << "Sent: " << ch << std::endl;
+
+            // Try to receive one char.
+            memset(rxBuf, 0, sizeof(rxBuf));
+            int n = read(fd, rxBuf, 1);
+            if (n > 0) {
+                std::cout << "Received: " << rxBuf[0] << std::endl;
+            } else {
+                std::cout << "No data received." << std::endl;
+            }
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     close(fd);
