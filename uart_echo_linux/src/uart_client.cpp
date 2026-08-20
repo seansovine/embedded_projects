@@ -44,7 +44,7 @@ int main() {
     tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 
     // Input modes:
-    //  Disable software flow control
+    //  No software flow control. (TODO: Read up on it.)
     tty.c_iflag &= ~(IXON | IXOFF | IXANY);
 
     // Output modes:
@@ -52,7 +52,7 @@ int main() {
     tty.c_oflag &= ~OPOST;
 
     // Read settings:
-    //  block until at least 1 byte arrives (or timeout)
+    //  block until at least 1 byte arrives, w/ 0.5 s timeout.
     tty.c_cc[VMIN]  = 1;
     tty.c_cc[VTIME] = 5; // 0.5 seconds timeout
 
@@ -62,15 +62,24 @@ int main() {
         return 1;
     }
 
-    // Test string.
+    // Test string and receive buffer (only using 1 byte).
     std::string msg = "Hello UART!";
-    char rxBuf[256];
+    char rxBuf[2];
+
+    /*
+     * Note on client/server protocol:
+     *
+     *  The "server" on te board receives on byte at a time
+     *  and then immediately echos it back. We send then
+     *  receive here based on that expectation.
+     */
 
     for (const char ch : msg) {
+        // Send one char.
         write(fd, (void *)&ch, 1);
         std::cout << "Sent: " << ch << std::endl;
 
-        // Receive data
+        // Try to receive one char.
         memset(rxBuf, 0, sizeof(rxBuf));
         int n = read(fd, rxBuf, 1);
         if (n > 0) {
