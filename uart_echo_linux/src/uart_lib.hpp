@@ -1,6 +1,7 @@
 #ifndef UART_LIB_HPP_
 #define UART_LIB_HPP_
 
+#include <cassert>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -22,10 +23,6 @@ public:
     TtyPort(int file_descriptor, struct termios tty)
         : file_descriptor_(file_descriptor),
           tty_(tty) {
-    }
-
-    ~TtyPort() {
-        close(file_descriptor_);
     }
 
     static std::optional<TtyPort> create(const std::string &portName) {
@@ -91,8 +88,13 @@ public:
         return file_descriptor_;
     }
 
+    void close_fd() {
+        assert(file_descriptor_ >= 0);
+        close(file_descriptor_);
+    }
+
 private:
-    int file_descriptor_;
+    int file_descriptor_ = -1;
     struct termios tty_;
 };
 

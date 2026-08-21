@@ -32,5 +32,6 @@ int main() {
         }
     }
 
+    port->close_fd();
     return 0;
 }
