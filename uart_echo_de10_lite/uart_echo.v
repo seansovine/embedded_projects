@@ -1,3 +1,6 @@
+// Clock rate 50 Mhz / 9600 baud.
+`define CLKS_PER_BIT_9600 5209
+
 module uart_echo #(
     parameter CLK_FREQ   = 50_000_000,
     parameter BLINK_RATE = 10
@@ -18,7 +21,7 @@ module uart_echo #(
     led_blinker_single blinker (
         .clk  (clk),
         .rst_n(rst_n),
-        .LED  (LED[9])
+        .LED  (LED[8])
     );
 
     // Current state of uart receiver data register.
@@ -26,26 +29,39 @@ module uart_echo #(
     wire uart_rx_dv;
     reg uart_received;
 
-    always @(posedge clk or negedge rst_n or posedge uart_rx_dv) begin
+    // always @(posedge clk or negedge rst_n or posedge uart_rx_dv) begin
+    //     if (!rst_n) begin
+    //         uart_received <= 1'b0;
+    //     end else begin
+    //         uart_received <= uart_received | uart_rx_dv;
+    //     end
+    // end
+
+    // Test that we're getting a signal on the uart rx pin.
+    always @(negedge uart_rx or negedge rst_n) begin
         if (!rst_n) begin
             uart_received <= 1'b0;
         end else begin
-            uart_received <= uart_received | uart_rx_dv;
+            uart_received <= 1'b1;
         end
     end
 
     uart_rx #(
-        // Set to CLK_FREQ / 115_200.
-        .CLKS_PER_BIT(434)
+        .CLKS_PER_BIT(`CLKS_PER_BIT_9600)
     ) uart_receiver (
         .i_Clock(clk),
         .i_Rx_Serial(uart_rx),
+        .i_Reset(rst_n),
         .o_Rx_DV(uart_rx_dv),
-        .o_Rx_Byte(uart_rx_byte)
+        .o_Rx_Byte(uart_rx_byte),
+
+        // Debug internal state.
+        // .o_State_debug(LED[2:0])
     );
 
     // LEDs 7 to 0 show start of UART receive byte register.
     assign LED[7:0] = uart_rx_byte;
-    assign LED[8]   = uart_received;
+    // LED[9] to show when receive done goes high.
+    assign LED[9]   = uart_received;
 
 endmodule
