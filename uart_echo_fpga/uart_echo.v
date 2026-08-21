@@ -19,15 +19,14 @@ module uart_echo #(
         if (!rst_n) begin            
             clk_counter <= 32'd0;
             LED         <= 10'b0;
-				current_led <= 4'b0;
+            current_led <= 4'b0;
         end else begin
 		      // Toggle next illuminated LED every 1 second.
             if (clk_counter >= (CLK_FREQ / BLINK_RATE - 1)) begin
-                clk_counter <= 32'd0; 
-					 
-					 LED[current_led] <= 1'b0;					 
+                clk_counter <= 32'd0;
+                LED[current_led] <= 1'b0;
                 LED[next_led]    <= 1'b1;
-					 current_led      <= next_led;					 
+                current_led      <= next_led;
             end else begin
                 clk_counter <= clk_counter + 1'b1;
             end
