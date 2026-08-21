@@ -57,7 +57,7 @@ int main() {
 
     // Read settings:
     //  block until at least 1 byte arrives, w/ 0.5 s timeout.
-    tty.c_cc[VMIN]  = 1;
+    tty.c_cc[VMIN]  = 0;
     tty.c_cc[VTIME] = 5; // 0.5 seconds timeout
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
@@ -81,6 +81,8 @@ int main() {
     static constexpr uint32_t NUM_TRANS = 100;
 
     for (uint32_t trans = 0; trans < NUM_TRANS; ++trans) {
+        std::cout << "\n>> Sending message " << trans << ":" << std::endl;
+
         for (const char ch : msg) {
             // Send one char.
             write(fd, (void *)&ch, 1);
