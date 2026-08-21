@@ -23,4 +23,4 @@ Relevant files are in:
 
 + [uart_echo_stm32f407](./uart_echo_stm32f407/)
 
-+ [uart_echo_fpga](./uart_echo_fpga/)
++ [uart_echo_de10_lite](./uart_echo_de10_lite/)
