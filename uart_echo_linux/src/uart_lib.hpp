@@ -1,6 +1,7 @@
 #ifndef UART_LIB_HPP_
 #define UART_LIB_HPP_
 
+#include <array>
 #include <cassert>
 #include <chrono>
 #include <cstdint>
@@ -25,7 +26,7 @@ public:
           tty_(tty) {
     }
 
-    static std::optional<TtyPort> create(const std::string &portName) {
+    static std::optional<TtyPort> create(const std::string &portName, speed_t baudRate) {
         // File descriptor parameters:
         //  read/write; cannot be controlling terminal;
         //  writes block until data + metadata are flushed
@@ -44,9 +45,9 @@ public:
             ;
         }
 
-        // Set Baud Rate to 115200.
-        cfsetispeed(&tty, B115200);
-        cfsetospeed(&tty, B115200);
+        // Set baud rate.
+        cfsetispeed(&tty, baudRate);
+        cfsetospeed(&tty, baudRate);
 
         // Control modes math configuration on board end:
         //  8 bits, no parity, 1 stop bit;
@@ -138,11 +139,19 @@ inline void echo_test_repeat(int file_descriptor) {
     }
 }
 
-inline void send_once(int file_descriptor) {
-    uint8_t sendData = 0x0F;
-    std::cout << "Sending byte: 0x" << std::hex << std::setw(2) << std::setfill('0') << (unsigned)sendData << std::endl;
-    write(file_descriptor, (void *)&sendData, 1);
-    std::cout << " - Send complete." << std::endl;
+inline void send_single_bytes(int file_descriptor) {
+    static constexpr std::array<uint8_t, 8> SEND_VALUES = {0xFF, 0x00, 0x0F, 0xF0, 0xAA, 0x55, 0xCC, 0x33};
+
+    for (uint32_t send_i = 0; send_i < std::size(SEND_VALUES); ++send_i) {
+        uint8_t sendData = SEND_VALUES[send_i];
+
+        std::cout << "Sending byte: 0x" << std::hex << std::setw(2) << std::setfill('0') << (unsigned)sendData
+                  << std::endl;
+        write(file_descriptor, (void *)&sendData, 1);
+        std::cout << " - Send complete." << std::endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 }
 
 #endif // UART_LIB_HPP_
