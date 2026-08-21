@@ -15,12 +15,6 @@ module uart_echo #(
           .LED  (LED)
     );
 
-    // TODO: Connect signals; need top-level state machine.
-    Uart8 #(
-          .CLOCK_RATE(50_000_000),
-          .BAUD_RATE (115_200)
-    ) uart (
-          .clk(clk)
-    );
+    // TODO: Find UART Verilog IP and use it to build echo server.
 
 endmodule

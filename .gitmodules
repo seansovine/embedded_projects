@@ -1,3 +1,0 @@
-[submodule "uart_echo_de10_lite/thirdparty/uart-verilog"]
-	path = uart_echo_de10_lite/thirdparty/uart-verilog
-	url = https://github.com/TimRudy/uart-verilog.git
