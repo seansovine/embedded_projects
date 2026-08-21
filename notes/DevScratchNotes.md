@@ -2,16 +2,25 @@
 
 ## DE10 Lite UART project
 
-The plan is to build a simple working UART echo server on our DE10 Lite board.
+We now have the receiving end of this done.
 
-### TODO:
+We used a UART receiver module found on [Nand Land](https://nandland.com/uart-serial-port-module/),
+and modified it slightly to add an asynchronous reset and the ability to debug its internal state.
+We also had add more bits to its clock tick register to accomodate a faster clock with a slower
+baud rate.
 
-__1.__ Find an open UART IP that just builds in Quartus.
+Next we will add a UART transmitter module and a top-level state machine to implement an echo server.
 
-__2.__ If it's not obvious how to make it work, read up on UARTs.
+We can also expore using a faster data rate. We used a slower rate to rule that out as a problem,
+but it could be that the insufficient tick counter width was causing the problem with the faster
+rate too.
 
-_Sources for (2) could be:_
+## Future work: Higher-bandwidth communication protocols
 
-+ Our embedded books that detail UART protocol.
+The UART project is really a test run, and lets us set up a system to help debug our designs.
+But for actual use of the FPGA we'll want to be able to communicate between the FPGA and the controller
+PC or MCU board with a much higher data rate.
 
-+ FPGA books that may contain a UART example worked out fully.
+For this we can try out different protocols and interfaces that are available for our two current FPGA
+dev boards. For the DE10 Lite, we could try SPI, which would require an internal clock domain crossing.
+Our Arty Z7 board has a much wider range of physical interfaces and AMD / Xilinx IP to make use of them.

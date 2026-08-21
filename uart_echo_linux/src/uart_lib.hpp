@@ -34,7 +34,6 @@ public:
         if (fd < 0) {
             std::cerr << "Error opening " << portName << std::endl;
             return std::nullopt;
-            ;
         }
 
         struct termios tty;
@@ -42,7 +41,6 @@ public:
             std::cerr << "Error from tcgetattr" << std::endl;
             close(fd);
             return std::nullopt;
-            ;
         }
 
         // Set baud rate.
@@ -79,7 +77,6 @@ public:
             std::cerr << "Error from tcsetattr" << std::endl;
             close(fd);
             return std::nullopt;
-            ;
         }
 
         return TtyPort{fd, tty};
