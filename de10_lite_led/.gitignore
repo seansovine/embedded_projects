@@ -1,0 +1,34 @@
+# Quartus Core Work and Database Folders
+db/
+incremental_db/
+hc_output/
+hps_isw_software/
+greybox_tmp/
+
+# Quartus Output Files (Bitstreams and Reports)
+output_files/
+*.sof
+*.pof
+*.rbf
+*.rpt
+*.summary
+*.done
+*.jdi
+*.pin
+*.sld
+*.chg
+*.vwm
+
+# User-specific Environment / Workspace Files
+*.qws
+*.wsf
+
+# Platform Designer (Qsys) Generated Folders
+# (Keeps the core .qsys file but ignores the generated HDL output directory)
+*_gdb/
+/synthesis/
+/simulation/
+
+# Megafunction / IP generated local tracking files
+*.bak
+
