@@ -28,8 +28,8 @@ inline void echo_test_repeat(int file_descriptor, int64_t byteDelay = 250) {
     static const std::string TEST_MSG           = "Hello UART!";
     static constexpr uint32_t NUM_TRANSMISSIONS = 100;
 
-    for (uint32_t trans = 0; trans < NUM_TRANSMISSIONS; ++trans) {
-        std::cout << "\n>> Sending message " << trans << ":" << std::endl;
+    for (uint32_t transNum = 0; transNum < NUM_TRANSMISSIONS; ++transNum) {
+        std::cout << "\n>> Sending message #" << transNum << ":" << std::endl;
 
         for (const char ch : TEST_MSG) {
             // Send one char.
@@ -67,8 +67,8 @@ inline void send_single_bytes(int file_descriptor, uint32_t bytesToSend = 8) {
         std::cout << "Sending byte: 0x" << std::hex << std::setw(2) << std::setfill('0') << (unsigned)sendData
                   << std::endl;
         write(file_descriptor, (void *)&sendData, 1);
-        std::cout << " - Send complete." << std::endl;
 
+        std::cout << " - Send complete." << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }

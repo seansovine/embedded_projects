@@ -1,10 +1,7 @@
 // Clock rate 50 Mhz / 9600 baud.
 `define CLKS_PER_BIT_9600 5209
 
-module uart_echo #(
-    parameter CLK_FREQ   = 50_000_000,
-    parameter BLINK_RATE = 10
-) (
+module uart_echo (
     // System clock 1.
     input wire clk,
     // Active-low, async reset (pushbutton 0).
@@ -31,7 +28,7 @@ module uart_echo #(
     wire uart_rx_dv;
     wire uart_tx_done;
 
-    // Echo server state machine.
+    // For top-level echo server state machine.
     parameter S_IDLE = 2'b00;
     parameter S_HAS_DATA = 2'b01;
     parameter S_SENDING = 2'b10;
@@ -40,10 +37,9 @@ module uart_echo #(
     reg [1:0] echo_state;
     reg uart_tx_start;
 
-    // Send state information to LED[9:8].
+    // To send state information to LED[9:8].
     reg [1:0] debug_state;
 
-    // Test that we're getting a signal on the uart rx pin.
     always @(negedge clk or negedge rst_n) begin
         if (!rst_n) begin
             echo_state  <= S_IDLE;

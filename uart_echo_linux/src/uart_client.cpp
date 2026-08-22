@@ -15,7 +15,7 @@ enum class Mode : uint32_t {
 
 static constexpr Mode MODE = Mode::EchoRepeat;
 
-// 9_600 for FPGA test ; 115_200 for microcontroller test.
+// 9_600 for FPGA test; 115_200 for microcontroller test.
 static constexpr const speed_t BAUD_RATE = B9600;
 static constexpr const char *PORT_NAME   = "/dev/ttyUSB0";
 

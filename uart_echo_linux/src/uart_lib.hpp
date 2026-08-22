@@ -11,53 +11,61 @@
 #include <termios.h>
 #include <unistd.h>
 
-// -------------------------------------------
-// Class representing Linux TTY serial device.
+// --------------------------------------------
+// Linux TTY serial device configured for uart.
 
 class TtyPort {
 public:
     static std::shared_ptr<TtyPort> create(const std::string &portName, speed_t baudRate) {
         // File descriptor parameters:
-        //   read/write; cannot be controlling terminal;
-        //   writes block until data + metadata are flushed
+        //   - read/write;
+        //   - cannot be controlling terminal;
+        //   - writes block until data + metadata are flushed
         int fd = open(portName.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+
         if (fd < 0) {
             std::cerr << "Error opening " << portName << std::endl;
             return nullptr;
         }
 
         struct termios tty;
+
         if (tcgetattr(fd, &tty) != 0) {
             std::cerr << "Error from tcgetattr" << std::endl;
             close(fd);
             return nullptr;
         }
 
-        // Set baud rate.
         cfsetispeed(&tty, baudRate);
         cfsetospeed(&tty, baudRate);
 
         // Control modes math configuration on board end:
-        //   8 bits, no parity, 1 stop bit;
-        //   disable hardware flow control.
-        tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8; // 8-bit characters
-        tty.c_cflag &= ~PARENB;                     // No parity
-        tty.c_cflag &= ~CSTOPB;                     // 1 stop bit
-        tty.c_cflag &= ~CRTSCTS;                    // No flow control
-        tty.c_cflag |= CREAD | CLOCAL;              // Turn on READ & ignore ctrl lines
+        //   - 8 data bits
+        //   - no parity bit
+        //   - 1 stop bit
+        //   - disable hardware flow control.
+        tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;
+        tty.c_cflag &= ~PARENB;
+        tty.c_cflag &= ~CSTOPB;
+        tty.c_cflag &= ~CRTSCTS;
+        tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl line.
+
         // Local modes:
-        //   Raw input (disable canonical mode, echo, signals)
+        //   - Raw input (disable canonical mode, echo, signals)
         tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+
         // Input modes:
-        //   No software flow control. (TODO: Read up on it.)
+        //   - No software flow control. (TODO: Read up on it.)
         tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+
         // Output modes:
-        //   Raw output; no post-processing.
+        //   - Raw output; no post-processing.
         tty.c_oflag &= ~OPOST;
+
         // Read settings:
-        //   block until at least 1 byte arrives, w/ 0.5 s timeout.
+        //   - 0.5 second timeout whether or not data was received.
         tty.c_cc[VMIN]  = 0;
-        tty.c_cc[VTIME] = 5; // 0.5 seconds timeout
+        tty.c_cc[VTIME] = 5;
 
         if (tcsetattr(fd, TCSANOW, &tty) != 0) {
             std::cerr << "Error from tcsetattr" << std::endl;
@@ -65,10 +73,11 @@ public:
             return nullptr;
         }
 
-        return std::make_shared<TtyPort>(fd, tty);
+        return std::shared_ptr<TtyPort>(new TtyPort(fd, tty));
     }
 
     int fd() {
+        assert(initialized());
         return file_descriptor_;
     }
 
@@ -76,23 +85,22 @@ public:
         return file_descriptor_ >= 0;
     }
 
-    TtyPort(int file_descriptor, struct termios tty)
-        : file_descriptor_(file_descriptor),
-          tty_(tty) {
-    }
-
     ~TtyPort() {
         close_fd();
     }
 
 private:
+    /// Takes ownership of the file descriptor; closes it on destruction.
+    TtyPort(int file_descriptor, struct termios tty)
+        : file_descriptor_(file_descriptor) {
+    }
+
     void close_fd() {
-        assert(file_descriptor_ >= 0);
+        assert(initialized());
         close(file_descriptor_);
     }
 
     int file_descriptor_ = -1;
-    struct termios tty_;
 };
 
 #endif // UART_LIB_HPP_

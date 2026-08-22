@@ -1,10 +1,10 @@
 module de10_lite_led #(
-      parameter CLK_FREQ   = 50_000_000,
-      parameter BLINK_RATE = 10
+    parameter CLK_FREQ   = 50_000_000,
+    parameter BLINK_RATE = 10
 ) (
-      input  wire clk,     // System clock 1.
-      input  wire rst_n,   // Active-low, async reset (pushbutton 0).
-      output reg [9:0] LED // LEDR0 - LEDR9.
+    input  wire clk,     // System clock 1.
+    input  wire rst_n,   // Active-low, async reset (pushbutton 0).
+    output reg [9:0] LED // LEDR0 - LEDR9.
 );
 
     // 32-bit register to count clock cycles.
@@ -21,7 +21,7 @@ module de10_lite_led #(
             LED         <= 10'b0;
             current_led <= 4'b0;
         end else begin
-            // Toggle next illuminated LED every 1 second.
+            // Toggle next illuminated LED every 1 / BLINK_RATE seconds.
             if (clk_counter >= (CLK_FREQ / BLINK_RATE - 1)) begin
                 clk_counter      <= 32'd0;
                 LED[current_led] <= 1'b0;
