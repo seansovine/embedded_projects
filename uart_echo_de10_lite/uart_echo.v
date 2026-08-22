@@ -17,32 +17,58 @@ module uart_echo #(
     // UART transmit signal.
     output wire uart_tx
 );
-    // Blink LED to show design is running.
+    // Provides 10 hz signal on LED. Not currently used (TODO).
     led_blinker_single blinker (
         .clk  (clk),
         .rst_n(rst_n),
-        .LED  (LED[8])
+        .LED  ()
     );
 
     // Current state of uart receiver data register.
     wire [7:0] uart_rx_byte;
     wire uart_rx_dv;
-    reg uart_received;
+    wire uart_tx_done;
 
-    // always @(posedge clk or negedge rst_n or posedge uart_rx_dv) begin
-    //     if (!rst_n) begin
-    //         uart_received <= 1'b0;
-    //     end else begin
-    //         uart_received <= uart_received | uart_rx_dv;
-    //     end
-    // end
+    // Echo server state machine.
+    parameter S_IDLE = 2'b00;
+    parameter S_HAS_DATA = 2'b01;
+    parameter S_SENDING = 2'b10;
+    parameter S_ERROR = 2'b11;
+
+    reg [1:0] echo_state;
+    reg uart_tx_start;
 
     // Test that we're getting a signal on the uart rx pin.
     always @(negedge uart_rx or negedge rst_n) begin
         if (!rst_n) begin
-            uart_received <= 1'b0;
+            echo_state <= S_IDLE;
         end else begin
-            uart_received <= 1'b1;
+
+            case (echo_state)
+                S_IDLE: begin
+                    if (uart_rx_dv) begin
+                        echo_state <= S_HAS_DATA;
+                    end
+                end
+
+                S_HAS_DATA: begin
+                    uart_tx_start <= 1'b1;
+                    echo_state <= S_SENDING;
+                end
+
+                S_SENDING: begin
+                    uart_tx_start <= 1'b0;
+                    if (uart_tx_done) begin
+                        echo_state <= S_IDLE;
+                    end
+                end
+
+                default: begin
+                    // We should not reach this case; indicate error.
+                    echo_state <= S_ERROR;
+                end
+            endcase
+
         end
     end
 
@@ -59,9 +85,21 @@ module uart_echo #(
         // .o_State_debug(LED[2:0])
     );
 
+    uart_tx #(
+        .CLKS_PER_BIT(`CLKS_PER_BIT_9600)
+    ) uart_transmitter (
+        .i_Clock(clk),
+        .i_Tx_DV(uart_tx_start),
+        .i_Tx_Byte(uart_rx_byte),
+        .i_Reset(rst_n),
+        .o_Tx_Active(),
+        .o_Tx_Serial(uart_tx),
+        .o_Tx_Done(uart_tx_done)
+    );
+
     // LEDs 7 to 0 show start of UART receive byte register.
     assign LED[7:0] = uart_rx_byte;
-    // LED[9] to show when receive done goes high.
-    assign LED[9]   = uart_received;
+    // Show server state in LEDs 9 and 8.
+    assign LED[9:8] = echo_state;
 
 endmodule

@@ -1,5 +1,7 @@
 //////////////////////////////////////////////////////////////////////
 // File Downloaded from http://www.nandland.com
+// and modified slightly to support higher clock rate,
+// add asynchronous reset, and debug internal state.
 //////////////////////////////////////////////////////////////////////
 // This file contains the UART Receiver.  This receiver is able to
 // receive 8 bits of serial data, one start bit, one stop bit,
@@ -47,7 +49,7 @@ module uart_rx #(
 
     // Purpose: Control RX state machine
     always @(posedge i_Clock or negedge i_Reset) begin
-        // Asynchronous reset rx data and state.
+        // Asynchronous reset of rx data and state.
         if (!i_Reset) begin
             r_Rx_Byte <= 8'b0;
             r_SM_Main <= s_IDLE;
