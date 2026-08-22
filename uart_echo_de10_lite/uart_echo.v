@@ -17,11 +17,13 @@ module uart_echo #(
     // UART transmit signal.
     output wire uart_tx
 );
-    // Provides 10 hz signal on LED. Not currently used (TODO).
+    wire blink_state;
+
+    // Provides 10 hz signal for blinking LEDs. Currently unused (TODO).
     led_blinker_single blinker (
         .clk  (clk),
         .rst_n(rst_n),
-        .LED  ()
+        .LED  (blink_state)
     );
 
     // Current state of uart receiver data register.
@@ -38,11 +40,17 @@ module uart_echo #(
     reg [1:0] echo_state;
     reg uart_tx_start;
 
+    // Send state information to LED[9:8].
+    reg [1:0] debug_state;
+
     // Test that we're getting a signal on the uart rx pin.
-    always @(negedge uart_rx or negedge rst_n) begin
+    always @(negedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            echo_state <= S_IDLE;
+            echo_state  <= S_IDLE;
+            debug_state <= 2'b0;
         end else begin
+            // Info to display on LEDs. Previously bitwise or of states reached.
+            debug_state <= echo_state;
 
             case (echo_state)
                 S_IDLE: begin
@@ -99,7 +107,7 @@ module uart_echo #(
 
     // LEDs 7 to 0 show start of UART receive byte register.
     assign LED[7:0] = uart_rx_byte;
-    // Show server state in LEDs 9 and 8.
-    assign LED[9:8] = echo_state;
+    // Show state debug info in LEDs 9 and 8.
+    assign LED[9:8] = debug_state;
 
 endmodule
