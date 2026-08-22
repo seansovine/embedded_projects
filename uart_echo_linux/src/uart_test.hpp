@@ -21,7 +21,7 @@
 /*
  * Sends and receives data according to the following client/server protocol:
  *
- * The "server" on te board receives on byte at a time and then immediately echos
+ * The "server" on the board receives one byte at a time and then immediately echos
  * it back. We send then receive here based on that expectation.
  */
 inline void echo_test_repeat(int file_descriptor, int64_t byteDelay = 250) {
