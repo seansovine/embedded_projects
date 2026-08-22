@@ -74,7 +74,6 @@ module uart_echo (
                     echo_state <= S_ERROR;
                 end
             endcase
-
         end
     end
 

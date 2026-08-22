@@ -103,6 +103,16 @@ This has some basic examples showing how to get started and demonstrating some o
 available in the embedded Rust ecosystem. It is mostly drawn from other projects and tutorials
 and adapted to this particular dev board, with comments on practical steps to get things working.
 
+### BeaglePlay single-board computer projects: [beagleplay_projects](https://github.com/seansovine/beagleplay_projects)
+
+Projects for developing on the BeaglePlay single-board Arm Linux computer, with a focus on sensor
+interfacing and embedded Linux.
+
+<p align="center" margin="20px">
+	<img src="https://github.com/seansovine/page_images/blob/main/photos/BeaglePlay%20BMP280%20-%2020260804_074528.jpg?raw=true"
+        alt="image of DE10 Lite board running echo server" height="800" style="padding-top: 10px; padding-bottom: 10px"/>
+</p>
+
 ## Interesting work by others
 
 ### RISCV CPU for DE10 Lite board: [RISCV](https://github.com/ShaheerSajid/RISCV) by Saheer Sajid
