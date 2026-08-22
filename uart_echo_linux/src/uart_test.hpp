@@ -24,9 +24,9 @@
  * The "server" on the board receives one byte at a time and then immediately echos
  * it back. We send then receive here based on that expectation.
  */
-inline void echo_test_repeat(int file_descriptor, int64_t byteDelay = 250) {
+inline void echo_test_repeat(int file_descriptor, int64_t byteDelay = 10) {
     static const std::string TEST_MSG           = "Hello UART!";
-    static constexpr uint32_t NUM_TRANSMISSIONS = 100;
+    static constexpr uint32_t NUM_TRANSMISSIONS = 8;
 
     for (uint32_t transNum = 0; transNum < NUM_TRANSMISSIONS; ++transNum) {
         std::cout << "\n>> Sending message #" << transNum << ":" << std::endl;

@@ -13,14 +13,13 @@ enum class Mode : uint32_t {
     SendOnce,
 };
 
-static constexpr Mode MODE = Mode::EchoRepeat;
-
-// 9_600 for FPGA test; 115_200 for microcontroller test.
-static constexpr const speed_t BAUD_RATE = B9600;
+static constexpr Mode MODE               = Mode::EchoRepeat;
+static constexpr const speed_t BAUD_RATE = B115200;
 static constexpr const char *PORT_NAME   = "/dev/ttyUSB0";
 
 int main() {
     std::shared_ptr<TtyPort> port = TtyPort::create(PORT_NAME, BAUD_RATE);
+
     if (!port) {
         return 1;
     }

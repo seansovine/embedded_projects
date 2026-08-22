@@ -1,5 +1,7 @@
 // Clock rate 50 Mhz / 9600 baud.
 `define CLKS_PER_BIT_9600 5209
+// Clock rate 50 Mhz / 115200 baud.
+`define CLKS_PER_BIT_115200 434
 
 module uart_echo (
     // System clock 1.
@@ -77,7 +79,7 @@ module uart_echo (
     end
 
     uart_rx #(
-        .CLKS_PER_BIT(`CLKS_PER_BIT_9600)
+        .CLKS_PER_BIT(`CLKS_PER_BIT_115200)
     ) uart_receiver (
         .i_Clock(clk),
         .i_Rx_Serial(uart_rx),
@@ -90,7 +92,7 @@ module uart_echo (
     );
 
     uart_tx #(
-        .CLKS_PER_BIT(`CLKS_PER_BIT_9600)
+        .CLKS_PER_BIT(`CLKS_PER_BIT_115200)
     ) uart_transmitter (
         .i_Clock(clk),
         .i_Tx_DV(uart_tx_start),
