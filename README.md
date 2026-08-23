@@ -18,7 +18,7 @@ or FPGA development board. It prints the data sent to and echoed back from the s
 the server is working correctly. It can be used as a template for setting up a UART to
 control or debug a microcontroller or FPGA.
 
-__The relevant subprojects are:__
+**The relevant subprojects are:**
 
 ### Linux C++ application: [uart_echo_linux](./uart_echo_linux/)
 
@@ -102,6 +102,11 @@ Here are some other projects I have posted publicly on topics related to embedde
 This has some basic examples showing how to get started and demonstrating some of the tools
 available in the embedded Rust ecosystem. It is mostly drawn from other projects and tutorials
 and adapted to this particular dev board, with comments on practical steps to get things working.
+
+### STM32F407-DISC1 accelerometer input device: [stm32f407_accelerometer](https://github.com/seansovine/stm32f407_accelerometer)
+
+This contains STM32 development board code and a Rust client library to use the on-board accelerometer
+as an input device on Linux.
 
 ### BeaglePlay single-board computer projects: [beagleplay_projects](https://github.com/seansovine/beagleplay_projects)
 
