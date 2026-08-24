@@ -39,7 +39,7 @@ public:
         cfsetispeed(&tty, baudRate);
         cfsetospeed(&tty, baudRate);
 
-        // Control modes math configuration on board end:
+        // Configure UART message to match config on the boards:
         //   - 8 data bits
         //   - no parity bit
         //   - 1 stop bit
