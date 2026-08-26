@@ -23,7 +23,7 @@ control or debug a microcontroller or FPGA.
 ### Linux C++ application: [uart_echo_linux](./uart_echo_linux/)
 
 This is a simple C++ program and library with a class that manages a ttyUSB device connection
-that is configured to communicate with a UART over a USB-to-UART bridge and a couple functions
+that is configured to communicate with a UART over a USB-to-UART bridge, and a couple functions
 for testing sending and receiving data over such a connection.
 
 The bridge device I use is [this one](https://www.amazon.com/dp/B07WX2DSVB), which has the

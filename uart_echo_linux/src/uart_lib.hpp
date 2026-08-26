@@ -91,6 +91,9 @@ public:
 
 private:
     /// Takes ownership of the file descriptor; closes it on destruction.
+    ///
+    /// I didn't want to have to think about implicit copies or move-only objects,
+    /// so you can only get an instance of this class through a shared pointer.
     TtyPort(int file_descriptor, struct termios tty)
         : file_descriptor_(file_descriptor) {
     }
