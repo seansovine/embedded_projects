@@ -10,6 +10,20 @@ see [External projects](#external-projects) below.
 And, [this](#interesting-work-by-others) section contains some interesting work by others
 that I've tried out and found to be useful or interesting.
 
+## Arty Z7 Zynq 7000 projects
+
+These are tutorials and projects for the Digilent [Arty Z7](https://digilent.com/shop/arty-z7-zynq-7000-soc-development-board/)
+board, which has an AMD / Xilinx Zynq 7000 chip on it. They will explain in detail various aspects of
+development with the Vivado and Vitis tools that I think are helpful when getting started with
+those tools. These specifically target the Z7-20 variant, but most should work on the Z7-10.
+
+### Bare metal PS to PL communication [example](./arty_z7/BareMetalPsPlAxi.md)
+
+This shows how to create a design in Vivado 2024.1 with a custom AXI IP that you can use to send and
+receive data between the processing system (PS) running a bare metal program and the programmable
+logic (PL). It includes bare metal C code using the Vitis Unified 2024.1 SDK to control the LEDs by
+writing to AXI shared registers. This version uses AXI-Lite with the PS as master.
+
 ## UART communication
 
 This is a simple UART echo server example. It has a Linux PC as client sending messages
