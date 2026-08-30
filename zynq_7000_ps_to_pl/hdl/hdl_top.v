@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module hdl_top (
-    // 100 Nhz clock from PL.
+    // 100 Mhz clock from PL.
     input clock,
 
     // Outputs from AXI IP registers.
@@ -44,8 +44,9 @@ module hdl_top (
     // Assign low bits of AXI reg 0 to LEDs, if enabled.
     assign leds = (axi_o_reg_1 == 32'b0) ? axi_o_reg_0[3:0] : 32'b0;
 
-    // For now send test values to PS.
+    // Send test value to this register.
     assign axi_i_reg_2 = 32'hCAFECAFE;
+    // Send counter value to be stored by the AXI IP.
     assign axi_i_reg_3 = tick_counter;
 
 endmodule

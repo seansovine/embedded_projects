@@ -12,9 +12,11 @@ that I've tried out and found to be useful or interesting.
 
 ## Arty Z7 Zynq 7000 projects
 
-These are tutorials and projects for the Digilent [Arty Z7](https://digilent.com/shop/arty-z7-zynq-7000-soc-development-board/)
-board, which has an AMD / Xilinx Zynq 7000 chip on it. They will explain in detail various aspects of
-the Vivado + Vitis development workflow that I have found helpful when getting started with it.
+These are tutorials and example projects for the Digilent
+[Arty Z7](https://digilent.com/shop/arty-z7-zynq-7000-soc-development-board/)
+board, which has an AMD/Xilinx Zynq 7000 SoC FPGA chip on it. They will explain in detail
+the process of setting up projects using the Vivado + Vitis development workflow to use various
+features of the hardware and supporting software.
 
 ### Bare metal PS to PL communication: [tutorial example](zynq_7000_ps_to_pl/BareMetalPsPlAxi.md)
 

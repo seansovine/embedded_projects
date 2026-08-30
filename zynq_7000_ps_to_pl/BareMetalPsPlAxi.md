@@ -9,9 +9,15 @@ the Arty Z7 (or other Zynq 7000) board that includes:
 
 + A bare metal C program using the Xilinx embedded SDK that reads and writes from these registers
 
-This material has been brought together from various AMD/Xilinx documents as well as online forums
-and videos. Hopefully this contains everything that is needed in one place, with workarounds and
-warnings for potential stumbling blocks or quirks that may be encountered.
+### Sources:
+
+The information here has been gathered from various AMD/Xilinx documents and from online forums
+and videos. Hopefully this contains everything that is needed in one place, with warnings and
+workarounds for potential stumbling blocks one might run into.
+There a few similar tutorials available online, including
+[this one](https://www.hackster.io/j-abate/integrating-zynq-ps-and-pl-with-memory-mapped-registers-292a42),
+which gave me the idea to separate the AXI registers into a set writable by the PL and a set
+writable by the PS.
 
 ## Create a design in Vivado
 
@@ -34,21 +40,22 @@ the board.
 ### Create a block design
 
 Click Create Block Design in the Flow Navigator to create a new block design, and in the block design
-diagram editor add an instance of the ZYNQ7 Processing System. Then click Run Block Automation on
+Diagram window add an instance of the ZYNQ7 Processing System. Then click Run Block Automation on
 the banner at the top of the editor to apply the board presets.
 
 You can add now a Processor System Reset block and an AXI Interconnect block now, but I find
-it's easier to let Block Automation add them for you in a later step. It will connect things
+it's easier to let Connection Automation add them for you in a later step. It will connect things
 correctly, and that will rule out one more source of error if you run the design on the board and
 it doesn't behave as expected.
 
 ### Create a custom AXI IP
 
 In the Tools Menu click Create and Package New IP. In the dialog that opens click Create a
-new AXI4 peripheral and click Next. On the next page name your IP -- I used "ps_to_pl_example"
-for this example -- and choose where to save it.
+new AXI4 peripheral and click Next. On the next page name your IP and choose where to save it.
+The name you choose here will also show up in constants that are generated in the supporting
+embedded C code.
 
-On the next page of the dialog, for this tutorial we'll use the default parameters, which
+On the next page of the dialog we'll use the default parameters, which
 are:
 
 + Interface type: Lite
@@ -59,34 +66,36 @@ are:
 
 + Number of registers: 4
 
-On the final page go ahead and click "Edit IP", though you can also go back and edit the IP
+On the final page we'll go ahead and click Edit IP, but you can also go back and edit the IP
 later from the IP Catalog menu. This will open a new instance of Vivado with the IP project
 opened for editing.
 
 By default the IP you created should have two slave devices, one called `S00_AXI` and one called
-`S_AXI_INTR`. We won't use the interrupt but we will keep it in the design, because it avoids a
-known issue in some versions of Vivado that causes a single AXI slave to be optimized in such
+`S_AXI_INTR`. We won't use the interrupt here but we will keep it in the design, because doing so
+avoids a known issue in some versions of Vivado that causes a single AXI slave to be optimized in such
 a way that it becomes unresponsive to reads. This issue is documented in the Vivado forums.
 
 __Edit the IP source files:__
 
-We will update the example Verilog files generated for the IP. The modified versions are in:
+We will update the example Verilog files generated for the IP. The versions with our modifications are in:
 
 + [`baremetal_ps_to_pl_v2.v`](hdl/axi_custom_ip/baremetal_ps_to_pl_v2.v)
 
 + [`baremetal_ps_to_pl_v2_slave_lite_v1_0_S00_AXI.v`](hdl/axi_custom_ip/baremetal_ps_to_pl_v2_slave_lite_v1_0_S00_AXI.v)
 
-As a side note, we use the [Verible](https://github.com/chipsalliance/verible) tool to format
-our Verilog files.
++ [`baremetal_ps_to_pl_v2_slave_lite_inter_v1_0_S_AXI_INTR.v`](hdl/axi_custom_ip/baremetal_ps_to_pl_v2_slave_lite_inter_v1_0_S_AXI_INTR.v)
 
-We will make it so:
+(Side note, we use the [Verible](https://github.com/chipsalliance/verible) tool to format our Verilog files.)
+
+We will make modifications so that:
 
 + registers 0 and 1 are only written to by the PS
 
 + registers 2 and 3 are only written to by the PL
 
-In the Hierarchy pane, expand the IP under Design Sources, and open the `_S00_AXI.v` file
-for editing. We'll add an output port:
+In the Hierarchy pane, expand the IP under Design Sources, and open the `*_S00_AXI.v` file
+for editing. We'll add couple input and output ports to allow other logic in the PL to access
+the registers:
 
 ```verilog
     // Users to add ports here
@@ -97,15 +106,16 @@ for editing. We'll add an output port:
     // User ports ends
 ```
 
-Note the definitions of the registers in this file.
+Note the definitions of these registers the generated source file:
 
 ```verilog
     reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg0;
-    ...
+    reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg1;
+    reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg2;
     reg [C_S_AXI_DATA_WIDTH-1:0] slv_reg3;
 ```
 
-We will expose registers 0 and 1 to the HDL code using module output ports:
+We will expose the values in registers 0 and 1 to the PL:
 
 ```verilog
 	// Add user logic here
@@ -114,7 +124,7 @@ We will expose registers 0 and 1 to the HDL code using module output ports:
 	// User logic ends
 ```
 
-And, we will modify the AXI write state macine so that it doesn't touch registers
+And, we will modify the AXI write state machine so that it doesn't touch registers
 2 and 3 (lines 226-254):
 
 ```verilog
@@ -137,20 +147,20 @@ And, we will modify the AXI write state macine so that it doesn't touch register
                 // Disallowing master writes to reg 3.
             end
             default: begin
-                // Registers 2 and 3 are read-only for PS.
+                // This case statement now only assigns to regs 0 and 1.
                 slv_reg0 <= slv_reg0;
                 slv_reg1 <= slv_reg1;
             end
         endcase
     end
 
-    // Update output regs on every clock cycle without reset.
+    // Update output regs on every clock rising edge.
     slv_reg2 <= i_reg_2;
     slv_reg3 <= i_reg_3;
 ```
 
-Then we add the same input signal to the IP top-level verilog file, `baremetal_ps_to_pl_v2.v`,
-and connect them to the input of the AXI slave module that's instantiated there. For us that is:
+Then we add the same new ports to the IP top-level Verilog file, `baremetal_ps_to_pl_v2.v`,
+and connect them to the ports of the AXI slave module that is instantiated there. For us that is:
 
 ```verilog
     // Instantiation of Axi Bus Interface S00_AXI
@@ -162,58 +172,60 @@ and connect them to the input of the AXI slave module that's instantiated there.
         .o_reg_1(o_reg_1),
         .i_reg_2(i_reg_2),
         .i_reg_3(i_reg_3),
+        ...
+        // Generated signal connections.
+    );
 ```
 
 __Add the new ports to the IP:__
 
-You should see "Updating..." in the sources pane after these changes are made. In the Package IP
-window go to the Ports and Interfaces pane and click the text that should appear in the banner to
-merge the changes from the HDL files into the table.
+You should see "Updating..." appear at the top of in the Sources pane after these changes are made. In the
+Package IP window go to the Ports and Interfaces pane and click the text that should appear in the banner
+there to merge the changes from the HDL files into the table.
 
 _Note:_ If the option to merge the changes is not visible for some reason, you can go back to the
-Verilog file and modify or delete and re-add the new ports and save, and the option to merge in
-changes from the HDL should then appear in the Ports and Interfaces pane.
+Verilog file and modify or delete and re-add the new ports and save, and the link to merge in
+changes from the HDL should then appear in the banner of the Ports and Interfaces pane.
 
 __Package the IP:__
 
 In the Package IP window, go to the Review and Package pane, which is the last option in the list,
 and click Re-Package IP. You can choose the option in the popup window to close the package IP project.
 
-### Add the IP to the project, connect signals, constrain external ports to package pins
+### Add the IP to the project, connect signals and regenerate block design
 
 Open the IP Catalog view from the Project Manager pane. Under the User Repository -> Axi Peripheral
 section you'll see the IP we just created. From here you can open it again for further editing.
 
-Back in the block design Diagram window, click the + icon, locate the new IP in the search windwo,
-and add it to the block design.
-
+Back in the block design Diagram window, click the + icon, locate the new IP in the search window,
+and add it to the block design. If you already have an instance of this IP in your design, the block
+design editor in the main Vivado window will prompt you to upgrade your IP and regenerate the block
+design output files.
 
 ### Validate and generate the block design and create HDL wrapper
 
-Click the checkbox icon on the menu bar of the Diagram window. At this point it should say that everything
-validated successfully. Then click Generate Block Design. The default options here should work fine.
+Click the checkbox icon on the menu bar of the Diagram window to validate the block design. At this point
+it should say that everything validated successfully. Then click Generate Block Design. The default options
+here should work fine.
 
 Now under the Design Sources section of the Sources pane right click the block design and click Create
 HDL Wrapper. It's okay to let Vivado manage and auto-update the wrapper. Unless you already created an
 additional HDL file, the HDL wrapper should automatically be set as the top module of the project.
 
-### Connect the LED signal to the package pins
-
-Right-click the `leds[3:0]` port on the custom HDL IP in the block design and click Make External.
-
-In a minute we will assign package pin constraints to the bits of this signals to connect them to the
-LEDs on the board.
+_Note:_ It's important that your block design is the top module for the project. If you create another
+HDL file before the block design wrapper, that file will be set as top by default. This will cause
+validation errors in later build steps.
 
 ### Add a custom HDL IP block
 
-In the Sources pane, click the + sign and follow the steps to create a new Verilog source file and
-add it to the project. You can create HDL code that uses the signals from the AXI IP registers in
-whatever way you'd like. Here we have created the following simple module to test out all the
+In the Sources pane, click the + sign and use the dialog that appears to create a new Verilog source
+file and add it to the project. You can create HDL code that uses the signals from the AXI IP registers
+in whatever way you'd like. Here we have created the following simple module to test out all the
 capabilities:
 
 ```verilog
 module hdl_top (
-    // 100 Nhz clock from PL.
+    // 100 Mhz clock from PL.
     input clock,
 
     // Outputs from AXI IP registers.
@@ -237,50 +249,63 @@ module hdl_top (
     // Assign low bits of AXI reg 0 to LEDs, if enabled.
     assign leds = (axi_o_reg_1 == 32'b0) ? axi_o_reg_0[3:0] : 32'b0;
 
-    // For now send test values to PS.
+    // Send test value to this register.
     assign axi_i_reg_2 = 32'hCAFECAFE;
+    // Send counter value to be stored by the AXI IP.
     assign axi_i_reg_3 = tick_counter;
 
 endmodule
 ```
 
-Now drag this file from the Sources pane and drop it in the block diagram editor window. This will
-create a new IP block from this source. Then connect the appropriate signals between the inputs and
-outputs of the custom AXI IP and this module, and connect the clock to the `FCLK_CLK0` of the
-ZYNQ7 Processing System block.
+This is in file [`hdl_top.v`](hdl/hdl_top.v).
 
-Now it's a good idea to validate the design again, and once it validates that everything is connected
-correctly, you can click Generate Block Design in the Flow Navigator.
+__Create IP block from Verilog source:__
+
+Now drag this file from the Sources pane and drop it in the Diagram window. This will create a new
+IP block from this source. Then make the appropriate connections between the inputs and
+outputs of the custom AXI IP and this module, and connect this module's clock port to the `FCLK_CLK0`
+of the ZYNQ7 Processing System block, so that this module and the AXI IP use a common clock.
+
+Now it's a good idea to validate the design again. Once it validates that everything is connected
+correctly, you can click Generate Block Design in the Flow Navigator to generate the output files
+for use in the next build steps.
+
+### Connect the LED signal to the package pins
+
+Now we will assign our design's external ports to physical pins on the chip package. In the Diagram
+editor , right-click the `leds[3:0]` port on the custom HDL IP in the block design and click
+Make External. In the next few steps we will assign package pin constraints to the individual bits
+of this signals to connect them to the LEDs on the board and assign appropriate IO standards.
 
 ### Run synthesis and apply pin constraints
 
 Now in the flow navigator click Run Synthesis. The default settings should work fine. When synthesis
 is complete, open the synthesized design.
 
-Once synthesis is complete, go to the Window menu and click I/O Ports. Now in the I/O Ports window
-expand the `leds_0` signal and assign an appropriate pin and I/O standard to each bit. The file
-[`constraints.xdc`](design/constraints.xdc) has the appropriate pin constraints for the Art Z7-20
-board. Of course you can find the appropriate ones for other boards in the data sheet or vendor
-documentation, and modify the HDL to drive whatever signals you need.
+Now go to the Window menu and click I/O Ports to open the I/O ports assignment editor. In that editor,
+expand the `leds_0` signal and assign an appropriate pin and I/O standard to each individual bit.
+The file [`constraints.xdc`](design/constraints.xdc) has the appropriate pin constraints for the Art Z7-20
+board. The full set of constraints for this board are available from Digilent online.
 
-### Run implementation, generate bitstream, and export hardware
+### Run implementation, generate bitstream and export hardware
 
-Once the constraints have been added, in the Flow Navigator click Run Implementation. Once implementation
-is complete, open the implemented design and click Generate Bitstream.
+Once the constraints have been added, in the Flow Navigator click Run Implementation. The default settings
+are fine. Once implementation is complete, open the implemented design and click Generate Bitstream.
 
-_Note:_ In some versions of Vivado you need to have the implemented design open to generate the bistream,
-or you will see an error logged to the console that indicates that it may not have run correctly.
+_Note:_ In some versions of Vivado you need to have the implemented design open to generate the bitstream,
+or you will see an error message logged to the console that indicates that it may not have run correctly.
 
-Finally, once the bistream is generated, go to Export Hardware under the File menu. In the Export Hardware
-window choose Include Bitstream and choose a location to save the generated `.xsa` file. We will import
-this file in a later step to create a hardware platform in Vitis.
+Finally, once the bitstream is generated, go to Export Hardware under the File menu. In the Export Hardware
+window choose Include Bitstream and choose a location to save the generated `.xsa` file to. We will import
+this file in Vitis in a later step to create a hardware platform.
 
 ## Create a bare metal platform and test application in Vitis
 
-TODO: Add steps for this and mention potential gotchas and tools for debugging.
-
 The C source for the example program we will create is in [`main.c`](src/main.c).
+The USB JTAG interface on the board has a UART-to-USB serial bridge built in, which you can
+connect to using a serial console, to read from stdout of the processing system code. I use the Tio serial
+console for this on Linux.
 
-The the USB JTAG interface on the board has a UART-to-USB serial bridge built in.
+_TODO:_ Add full steps for this and mention potential issues and tools for debugging.
 
 > _Next installment coming soon._

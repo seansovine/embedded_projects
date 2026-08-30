@@ -14,6 +14,8 @@ static const u32 AXI_REG_1 = AXI_REG_BASEADDR + 0x04;
 static const u32 AXI_REG_2 = AXI_REG_BASEADDR + 0x08;
 static const u32 AXI_REG_3 = AXI_REG_BASEADDR + 0x0C;
 
+static const float PL_CLK_HZ = 100000000.0;
+
 int main() {
   init_platform();
 
@@ -31,22 +33,21 @@ int main() {
   reg_1_val = Xil_In32(AXI_REG_1);
   xil_printf(" - Register 1 after write: %08X\n\r", reg_1_val);
   reg_2_val = Xil_In32(AXI_REG_2);
-  xil_printf(" - Register 2 after write: %08X\n\r", reg_2_val);
+  xil_printf(" - Register 2 initial: %08X\n\r", reg_2_val);
   reg_3_val = Xil_In32(AXI_REG_3);
-  xil_printf(" - Register 3 after write: %08X\n\r", reg_3_val);
+  xil_printf(" - Register 3 initial: %08X\n\r", reg_3_val);
 
   for (u32 i = 0; i < 16; ++i) {
     xil_printf("\n\rIteration %02u:\n\r", i);
 
-    // Not necessary:
-    // Xil_DCacheInvalidateRange(AXI_REG_BASEADDR, 32);
-
     reg_3_val = Xil_In32(AXI_REG_3);
     xil_printf(" - Tick count register (reg 3): %010u\n\r", reg_3_val);
 
-    float seconds = reg_3_val / 100000000.0;
+    // Should be ~1/4 second from last reading.
+    float seconds = reg_3_val / PL_CLK_HZ;
     printf(" - In seconds: %.8f\n\r", seconds);
 
+    // Delay 1/4 second.
     usleep(250 * 1000);
   }
 
