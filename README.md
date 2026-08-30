@@ -14,15 +14,21 @@ that I've tried out and found to be useful or interesting.
 
 These are tutorials and projects for the Digilent [Arty Z7](https://digilent.com/shop/arty-z7-zynq-7000-soc-development-board/)
 board, which has an AMD / Xilinx Zynq 7000 chip on it. They will explain in detail various aspects of
-development with the Vivado and Vitis tools that I think are helpful when getting started with
-those tools. These specifically target the Z7-20 variant, but most should work on the Z7-10.
+the Vivado + Vitis development workflow that I have found helpful when getting started with it.
 
-### Bare metal PS to PL communication [example](./arty_z7/BareMetalPsPlAxi.md)
+### Bare metal PS to PL communication: [tutorial example](zynq_7000_ps_to_pl/BareMetalPsPlAxi.md)
 
-This shows how to create a design in Vivado 2024.1 with a custom AXI IP that you can use to send and
-receive data between the processing system (PS) running a bare metal program and the programmable
-logic (PL). It includes bare metal C code using the Vitis Unified 2024.1 SDK to control the LEDs by
-writing to AXI shared registers. This version uses AXI-Lite with the PS as master.
+This shows how to create a design in Vivado with a custom AXI IP that you can use to send and
+receive data between the processing system (PS) running a bare metal program and the programmable logic
+(PL) running a design created from Verilog sources. It includes bare metal C code using the Xilinx
+embedded SDK to send and receive data to and from AXI shared registers and Verilog source code for a PL
+design that writes to these registers and uses values read from them to control the board LEDs.
+This version uses AXI-Lite with the PS as master.
+
+<p align="center" margin="20px">
+        <img src="https://github.com/seansovine/page_images/blob/main/photos/Arty%20Z7-20%20and%20laptop%20-%2020260829.jpg?raw=true"
+        alt="image of MCU echo server connected to PC" width="600" style="padding-top: 10px; padding-bottom: 10px"/>
+</p>
 
 ## UART communication
 
@@ -96,7 +102,7 @@ _DE10 Lite board running the echo server:_
 
 <p align="center" margin="20px">
 	<img src="https://github.com/seansovine/page_images/blob/main/photos/DE10%20Lite%20UART%20echo%20close%20-%2020260822_105944.jpg?raw=true"
-        alt="image of DE10 Lite board running echo server" width="800" style="padding-top: 10px; padding-bottom: 10px"/>
+        alt="image of DE10 Lite board running echo server" width="550" style="padding-top: 10px; padding-bottom: 10px"/>
 </p>
 
 ## DE10 Lite LED blink
