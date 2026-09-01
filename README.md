@@ -32,6 +32,15 @@ This version uses AXI-Lite with the PS as master.
         alt="image of MCU echo server connected to PC" width="600" style="padding-top: 10px; padding-bottom: 10px"/>
 </p>
 
+### Interesting Zynq resources
+
+Here are a few interesting resources I've found on the Zynq 7000 architecture and PS-to-PL communication:
+
++ [The Zynq Book](https://www.zynqbook.com/) by the University of Strathclyde
+
++ This 2020 Purdue [thesis](https://hammer.purdue.edu/articles/EFFICIENT_IMPLEMENTATION_OF_SOBEL_EDGE_DETECTION_WITH_ZYNQ-7000/12252704/files/22543922.pdf)
+  on the efficiency of Zynq 7000 communication
+
 ## UART communication
 
 This is a simple UART echo server example. It has a Linux PC as client sending messages
@@ -91,8 +100,9 @@ Max 10 FPGA chip on it. It includes the Verilog source files and the necessary p
 and build the design in Quartus.
 
 I got the UART receiver and transmitter modules from [Nand Land](https://nandland.com/uart-serial-port-module/)
-and modified them very slightly to add an asynchronous reset and to allow debugging the internal
-state while I was intially getting the design working correctly.
+and modified them very slightly to add an asynchronous reset (because we're generating a reset from a
+pushbutton for this design) and to allow debugging the internal state while I was initially
+getting the design working correctly.
 
 The main Verilog file for the design is: [`uart_echo.v`](uart_echo_de10_lite/uart_echo.v). It is
 setup so that the rightmost 8 LEDs on the board show the bits of the internal byte buffer of the

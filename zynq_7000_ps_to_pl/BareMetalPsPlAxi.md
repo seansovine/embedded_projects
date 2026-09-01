@@ -1,6 +1,6 @@
 # Arty Z7 bare metal PS to PL communication
 
-This tutorial contains practical steps you can use to setup an example project in Vivaod + Vitis for
+This tutorial contains practical steps you can use to setup an example project in Vivado + Vitis for
 the Arty Z7 (or other Zynq 7000) board that includes:
 
 + A custom AXI IP with four 32-bit registers shared between the PS and PL
@@ -273,7 +273,7 @@ for use in the next build steps.
 ### Connect the LED signal to the package pins
 
 Now we will assign our design's external ports to physical pins on the chip package. In the Diagram
-editor , right-click the `leds[3:0]` port on the custom HDL IP in the block design and click
+editor, right-click the `leds[3:0]` port on the custom HDL IP in the block design and click
 Make External. In the next few steps we will assign package pin constraints to the individual bits
 of this signals to connect them to the LEDs on the board and assign appropriate IO standards.
 
@@ -301,11 +301,172 @@ this file in Vitis in a later step to create a hardware platform.
 
 ## Create a bare metal platform and test application in Vitis
 
-The C source for the example program we will create is in [`main.c`](src/main.c).
+The C source for the example program we will create is in [`main.c`](src/main.c). We are using the free
+2024.1 version of the Vitis Unified IDE that is bundled with the same version of Vivado.
+
+### Getting output from the board
+
 The USB JTAG interface on the board has a UART-to-USB serial bridge built in, which you can
 connect to using a serial console, to read from stdout of the processing system code. I use the Tio serial
-console for this on Linux.
+console for this on Linux. A glance at `dmesg` after connecting the board's programmer USB to you PC and
+powering it up will show you which USB devices were created for the board.
 
-_TODO:_ Add full steps for this and mention potential issues and tools for debugging.
+The programmer USB actually creates two serial devices: In my setup they are `/dev/ttyUSB0` and
+`/dev/ttyUSB1`. The second one is configured for use by the `printf` statements in the running embedded
+code, so that's the one I connect my serial console to.
 
-> _Next installment coming soon._
+### Create an embedded platform using exported hardware file
+
+Open Vitis and either from the welcome page or from File menu -> New Component open the dialog to create
+a new platform component. In the Create Platform Component dialog name the component and choose a workspace
+folder location. Vitis uses a single folder as its workspace and automatically detects and components
+exist in immediate subfolders of that workspace.
+
+On the next page choose the Hardware Design option and use Browse to find and select the `.xsa` file that
+we exported after implementing our design in Vivado. Then on the next page we will keep "standalone" for
+the operating system, because we want this project to run on bare metal with no OS, and you can choose
+either processor to target. Since there is no OS, to use both processors we'd have to program them
+separately and manage shared resources and communication between them.
+
+__Configure and build the platform:__
+
+You will see the newly-created platform component in the Vitis Components pane in the upper left part of
+the Vitis workspace.  If you expand its item, then expand Settings, then double-clicking `vitis-comp.json`
+will open the platform configuration for editing. In particular, the "Switch XSA" option on the top-level
+page there allows you to rebuild the platform from a new `.xsa` file. This lets you make updates to the
+platform without recreating any application components you've created that depend on it.
+
+In the Flow pane under Vitis Components, select the platform component if it isn't already and click Build.
+In the Output pan at the bottom of the screen you will see log output that should end with "Platform Build
+Finished successfully".
+
+### Create a bare metal application
+
+You can create an application from scratch, but I find it much easier to start with one of the examples,
+so that's what we'll do here. Go to the Welcome page or to File -> New Component, and choose the option
+to create a new component from examples. We'll choose the "hello world" example, as a a good starting place
+for a bare metal C application to run on our chosen CPU core.
+
+After choosing the example you can change the name, then we will choose the platform we defined in this
+workspace from the exported `.xsa` hardware description, and we will choose the one domain in our platform.
+According to the docs a domain is a combination of a process and a board support package (BSP) or an OS.
+A platform can have multiple domains that run simultaneously.
+
+__Potential config fixes:__
+
+Sometimes some of the launch configuration information gets misconfigured when you first
+create an application. I'm not sure what sequence of actions triggers these, but I'm in the habit of fixing
+these up front to avoid doing it later. If you expand Settings under the application in the Vitis Components
+pane and open `launch.json`, you'll see text boxes for Bitstream File and Initialization File.
+
+I use Browse to point the first of these to the `.bit` file in the directory of the Vivado project used to generate
+the `.xsa` file. This makes sure that if you regenerate the Vivado project the newly-generated bitstream file will
+used to configure the PL. Sometime this won't update on its own with the initial configuration.
+
+Then, we want to make sure that the Initialization File input points to the `ps7_init.tcl` file in the `_ide/psinit`
+subfolder. Sometimes it gets pointed at a TCL script for initializing the IP, and the application project
+will then fail to run.
+
+### Modifying the main C source file
+
+To cut right to the chase, I modified the generated `helloworld.c` file to the following:
+
+```c
+#include "platform.h"
+#include "xparameters.h"
+
+#include "sleep.h"
+#include "xil_cache.h"
+#include "xil_io.h"
+#include "xil_printf.h"
+
+#include <stdio.h>
+
+static const u32 AXI_REG_BASEADDR = XPAR_BAREMETAL_PS_TO_PL_V2_0_BASEADDR;
+static const u32 AXI_REG_0 = AXI_REG_BASEADDR + 0x00;
+static const u32 AXI_REG_1 = AXI_REG_BASEADDR + 0x04;
+static const u32 AXI_REG_2 = AXI_REG_BASEADDR + 0x08;
+static const u32 AXI_REG_3 = AXI_REG_BASEADDR + 0x0C;
+
+static const float PL_CLK_HZ = 100000000.0;
+
+int main() {
+  init_platform();
+
+  print("AXI PS-to_PL:\n\r");
+  Xil_Out32(AXI_REG_0, 0x0000000Cu);
+  Xil_Out32(AXI_REG_1, 0x00000000u);
+
+  u32 reg_0_val = 0;
+  u32 reg_1_val = 0;
+  u32 reg_2_val = 0;
+  u32 reg_3_val = 0;
+
+  reg_0_val = Xil_In32(AXI_REG_0);
+  xil_printf(" - Register 0 after write: %08X\n\r", reg_0_val);
+  reg_1_val = Xil_In32(AXI_REG_1);
+  xil_printf(" - Register 1 after write: %08X\n\r", reg_1_val);
+  reg_2_val = Xil_In32(AXI_REG_2);
+  xil_printf(" - Register 2 initial: %08X\n\r", reg_2_val);
+  reg_3_val = Xil_In32(AXI_REG_3);
+  xil_printf(" - Register 3 initial: %08X\n\r", reg_3_val);
+
+  for (u32 i = 0; i < 16; ++i) {
+    xil_printf("\n\rIteration %02u:\n\r", i);
+    Xil_Out32(AXI_REG_0, i);
+
+    reg_3_val = Xil_In32(AXI_REG_3);
+    xil_printf(" - Tick count register (reg 3): %010u\n\r", reg_3_val);
+
+    // Should be ~1/4 second from last reading.
+    float seconds = reg_3_val / PL_CLK_HZ;
+    printf(" - In seconds: %.8f\n\r", seconds);
+
+    // Delay 1/4 second.
+    usleep(250 * 1000);
+  }
+
+  print("\nDone!\n\r");
+  cleanup_platform();
+  return 0;
+}
+
+```
+
+If you add `#include "xparameters.h"`, you can use Clangd to see that this generated header file lives in
+the platform source directories. The base address in its definition can also be seen in the Address window
+of the block diagram view in Vivado. It is the memory address that the PS MMU maps to the AXI shared registers
+that were generated for our custom IP. Since they were each 32 bits and are mapped sequentially, we can access
+each next one by adding four to the base address, which we do in the following definitions.
+
+After this, the code is straightforward: We write to the two registers we setup for writing from the PS, and
+we read all four values. In particular, remember that the value of register 3 was a count of the PL clock
+that was updated in the PL on every tick. And in Zynq 7000 the clock that is output from the PS to the PL
+is derived from the same reference clock that drives the PS, divided to the appropriate frequency by a PLL
+in the PS. So looking at this clock tick can give some very rough sense of the latency and variance of getting
+data to and from the PL.
+
+Note also the definition (simplified slightly):
+
+```c
+static INLINE void Xil_Out32(UINTPTR Addr, u32 Value)
+{
+	/* write 32 bit value to specified address */
+	volatile u32 *LocalAddr = (volatile u32 *)Addr;
+	*LocalAddr = Value;
+}
+```
+
+This makes our assignment pass through a volatile pointer. This keeps the compiler from making optimizations
+based on the assumption that the value stored at `Addr` only changes through code it sees. Since this points
+to mapped memory shared with the PL that assumption would be invalid, potentially leading to the code having
+stale values if the PL updates the variable and the compiler doesn't generate code that reloads it on each read.
+
+### Debugging and further discussion
+
+I plan to add more to this section in the future. But for now, I'll mention that Vitis has excellent integration
+with the Target Communication Framework (TCF) debugger. And, Vivado has the Integrated Logic Analyzer (ILA)
+that can be used to monitor and capture the values of signals in the PL as it's running. I have seen this put
+to good use by posters in the Xilinx forums for debugging issues with the AXI communication state. I tend to
+use printing to the console and even the board LEDs to help track the state of the PS and PL at a high level
+as I'm developing. But there are many tools I haven't learned yet and taken advantage of.
