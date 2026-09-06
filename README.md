@@ -36,9 +36,9 @@ This version uses AXI-Lite with the PS as master.
 
 Here are a few interesting resources I've found on the Zynq 7000 architecture and PS-to-PL communication:
 
-+ [The Zynq Book](https://www.zynqbook.com/) by the University of Strathclyde
+- [The Zynq Book](https://www.zynqbook.com/) by the University of Strathclyde
 
-+ This 2020 Purdue [thesis](https://hammer.purdue.edu/articles/EFFICIENT_IMPLEMENTATION_OF_SOBEL_EDGE_DETECTION_WITH_ZYNQ-7000/12252704/files/22543922.pdf)
+- This 2020 Purdue [thesis](https://hammer.purdue.edu/articles/EFFICIENT_IMPLEMENTATION_OF_SOBEL_EDGE_DETECTION_WITH_ZYNQ-7000/12252704/files/22543922.pdf)
   on the efficiency of Zynq 7000 communication
 
 ## UART communication
@@ -155,6 +155,12 @@ interfacing and embedded Linux.
 	<img src="https://github.com/seansovine/page_images/blob/main/photos/BeaglePlay%20BMP280%20-%2020260804_074528.jpg?raw=true"
         alt="image of DE10 Lite board running echo server" height="800" style="padding-top: 10px; padding-bottom: 10px"/>
 </p>
+
+### Linux camera streaming and conversion: [linux_camera](https://github.com/seansovine/linux_camera)
+
+This is an example of using the FFmpeg libavdevice and libavcodec APIs to stream frames from an
+H264 USB camera and convert them to JPEG images. It's not strictly an embedded project, but I am
+running it on the BeaglePlay single board computer.
 
 ## Interesting work by others
 
