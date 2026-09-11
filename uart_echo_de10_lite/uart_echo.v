@@ -16,15 +16,6 @@ module uart_echo (
     // UART transmit signal.
     output wire uart_tx
 );
-    wire blink_state;
-
-    // Provides 10 hz signal for blinking LEDs. Currently unused (TODO).
-    led_blinker_single blinker (
-        .clk  (clk),
-        .rst_n(rst_n),
-        .LED  (blink_state)
-    );
-
     // Current state of uart receiver data register.
     wire [7:0] uart_rx_byte;
     wire uart_rx_dv;

@@ -101,6 +101,7 @@ private:
     void close_fd() {
         assert(initialized());
         close(file_descriptor_);
+        file_descriptor_ = -1;
     }
 
     int file_descriptor_ = -1;
