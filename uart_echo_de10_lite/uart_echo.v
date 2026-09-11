@@ -33,7 +33,7 @@ module uart_echo (
     // To send state information to LED[9:8].
     reg [1:0] debug_state;
 
-    always @(negedge clk or negedge rst_n) begin
+    always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             echo_state  <= S_IDLE;
             debug_state <= 2'b0;
