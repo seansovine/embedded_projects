@@ -10,6 +10,12 @@ see [External projects](#external-projects) below.
 And, [this](#interesting-work-by-others) section contains some interesting work by others
 that I've tried out and found to be useful or interesting.
 
+## Programming and debugging STM32 with OpenOCD and GDB
+
+[These](stm32_openocd_gdb/Notes.md) are brief but fairly complete instructions on how to use
+OpenOCD and GDB to program an STM32 Nucleo board and run and debug code on it with the
+built-in ST-Link interface.
+
 ## Arty Z7 Zynq 7000 projects
 
 These are tutorials and example projects for the Digilent
